@@ -16,6 +16,7 @@
 
     <div class="content">
         <h1>An Approximation of Wordle</h1>
+        {#
         <div class="pure-u-1">
             <div class="tile pure-u-1-12" data-state="tbd" d>t</div>
             <div class="tile pure-u-1-12" data-state="absent" d>a</div>
@@ -23,6 +24,7 @@
             <div class="tile pure-u-1-12" data-state="absent" d>t</div>
             <div class="tile pure-u-1-12" data-state="correct" d>s</div>
         </div>
+        #}
         
         {# Expecting: a list of past turns, plus one new set of tiles #}
         {# Each turn is a list of tuples: (letter, result class)  #}
@@ -44,6 +46,8 @@
             {% endfor %}
         </div>
         
+        <h3>Guesses remaining: {{guesses_remaining}}</h3>
+
         
     </div>
 
