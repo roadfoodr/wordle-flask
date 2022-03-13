@@ -2,15 +2,17 @@ from flask import Flask, render_template
 import random
 from datetime import date
 import json
+# import sys
 
 app = Flask(__name__)
 
-MAX_GUESSES = 5
+MAX_GUESSES = 6
 
-guesses = []
-results_history = []
-num_guesses = 0
+turns = []
+guesses_remaining = MAX_GUESSES
 letters_used = set()
+gamestate = 'pending'
+
 
 with open("./data/w_answers.json", 'r') as f:
     w_answers = json.load(f)
@@ -27,40 +29,41 @@ correct_word = random.choice(w_answers)
 
 @app.route("/")
 def hello_world():
-    return render_template("index.html", guess='')
+    return render_template("index.html", turns=turns, tiles=[], valid=True, 
+                           gamestate='pending')
 
 @app.route("/wizmode")
 def wizmode():
-    # return f"Today's word: <strong>{correct_word}</strong>"
     results = evaluate_guess(correct_word, correct_word)
     tiles = zip(correct_word, results)
-    return render_template("index.html", tiles=tiles, valid=True)
+    return render_template("index.html", turns=turns, tiles=tiles, valid=True, 
+                           gamestate='pending')
 
 @app.route("/guess/<string:guess>")
 def process_guess(guess):
     guess=guess.lower()
     if guess == 'random':
-        # return (f'A random allowable guess: <strong>'
-        #        f'{random.choice(w_allowed)}</strong>')]
         guess = random.choice(w_allowed)
         results = evaluate_guess(correct_word, guess)
-        tiles = zip(guess, results)
-        return render_template("index.html", tiles=tiles, valid=True)
+        tiles = list(zip(guess, results))  # Jinja not able to work easily with zip iterator
+        turns.append(tiles)
+        return render_template("index.html", turns=turns[:-1], tiles=turns[-1], valid=True, 
+                           gamestate='pending')
         
     if guess not in w_allowed:
         results = ['tbd' for letter in guess]
         tiles = zip(guess, results)
-        # return f'<strong>{guess}</strong> is not an allowable guess'
-        return render_template("index.html", tiles=tiles, valid=False)
+        return render_template("index.html", turns=turns, tiles=tiles, valid=False, 
+                           gamestate='pending')
     # TODO: if the guess is repeated, don't increment histories
     # TODO: continue here to implement display of current and past guesses
     # evaluate 
     else:
         results = evaluate_guess(correct_word, guess)
         letters_used.update(set(guess))
-        guesses.append(guess)
-        results_history.append(results)
-        # Use len(guesses) to track the number of guesses
+        turn = zip(guess, results)
+        turns.append(turn)
+        # Use len(turns) to track the number of turns
         return (f'You guessed: <strong>{guess}</strong>\n'
                 f'the results are: {results}\n'
                 f'letters used: {letters_used}')
@@ -85,4 +88,7 @@ def evaluate_guess(correct_word: str, guess: str) -> list:
             result = 'correct'
         results.append(result)
     return results
-    
+
+
+# temp_turn = zip('guess', evaluate_guess(correct_word, 'guess'))
+# turns.append(temp_turn)

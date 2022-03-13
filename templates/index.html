@@ -24,12 +24,23 @@
             <div class="tile pure-u-1-12" data-state="correct" d>s</div>
         </div>
         
+        {# Expecting: a list of past turns, plus one new set of tiles #}
+        {# Each turn is a list of tuples: (letter, result class)  #}
+        
+        {% for turn in turns %}
+            <div class="pure-u-1">
+                {% for letter, result in turn %}
+                <div class="tile pure-u-1-12" data-state="{{result}}" d>{{letter}}</div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+        
         <div class="pure-u-1">
             {% if valid == False %}
                 <h3 class="error">Not an allowable guess:</h3>
             {% endif %}
-            {% for tile in tiles %}
-            <div class="tile pure-u-1-12" data-state="{{tile[1]}}" d>{{tile[0]}}</div>
+            {% for letter, result in tiles %}
+            <div class="tile pure-u-1-12" data-state="{{result}}" d>{{letter}}</div>
             {% endfor %}
         </div>
         
