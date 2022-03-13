@@ -42,11 +42,18 @@
                 <h3 class="error">Not an allowable guess:</h3>
             {% endif %}
             {% for letter, result in tiles %}
-            <div class="tile pure-u-1-12" data-state="{{result}}" d>{{letter}}</div>
+                <div class="tile pure-u-1-12" data-state="{{result}}" d>{{letter}}</div>
             {% endfor %}
         </div>
         
         <h3>Guesses remaining: {{guesses_remaining}}</h3>
+        
+        <h4>Letters used:</h4>
+        <div class="pure-u-1">
+            {% for letter in letters_used %}
+                <span class="sm-button">{{letter}}</span>
+            {% endfor %}
+        </div>
 
         
     </div>
