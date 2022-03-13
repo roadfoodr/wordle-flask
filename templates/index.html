@@ -15,20 +15,22 @@
     <body>
 
     <div class="content">
-        
+        <h1>An Approximation of Wordle</h1>
         <div class="pure-u-1">
-            <div class="tile pure-u-1-12" data-state="absent" d>t</div>
-            <div class="tile pure-u-1-12" data-state="present" d>e</div>
-            <div class="tile pure-u-1-12" data-state="present" d>s</div>
-            <div class="tile pure-u-1-12" data-state="absent" d>t</div>
-            <div class="tile pure-u-1-12" data-state="absent" d>y</div>
-        </div>
-        <div class="pure-u-1">
-            <div class="tile pure-u-1-12" data-state="absent" d>t</div>
+            <div class="tile pure-u-1-12" data-state="tbd" d>t</div>
             <div class="tile pure-u-1-12" data-state="absent" d>a</div>
             <div class="tile pure-u-1-12" data-state="absent" d>r</div>
             <div class="tile pure-u-1-12" data-state="absent" d>t</div>
             <div class="tile pure-u-1-12" data-state="correct" d>s</div>
+        </div>
+        
+        <div class="pure-u-1">
+            {% if valid == False %}
+                <h3 class="error">Not an allowable guess:</h3>
+            {% endif %}
+            {% for tile in tiles %}
+            <div class="tile pure-u-1-12" data-state="{{tile[1]}}" d>{{tile[0]}}</div>
+            {% endfor %}
         </div>
         
         

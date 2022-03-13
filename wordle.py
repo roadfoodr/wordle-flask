@@ -8,6 +8,7 @@ app = Flask(__name__)
 MAX_GUESSES = 5
 
 guesses = []
+results_history = []
 num_guesses = 0
 letters_used = set()
 
@@ -26,24 +27,39 @@ correct_word = random.choice(w_answers)
 
 @app.route("/")
 def hello_world():
-    return render_template("index.html")
+    return render_template("index.html", guess='')
 
 @app.route("/wizmode")
 def wizmode():
-    return f"Today's word: <strong>{correct_word}</strong>"
+    # return f"Today's word: <strong>{correct_word}</strong>"
+    results = evaluate_guess(correct_word, correct_word)
+    tiles = zip(correct_word, results)
+    return render_template("index.html", tiles=tiles, valid=True)
 
 @app.route("/guess/<string:guess>")
 def process_guess(guess):
     guess=guess.lower()
     if guess == 'random':
-        return (f'A random allowable guess: <strong>'
-               f'{random.choice(w_allowed)}</strong>')
+        # return (f'A random allowable guess: <strong>'
+        #        f'{random.choice(w_allowed)}</strong>')]
+        guess = random.choice(w_allowed)
+        results = evaluate_guess(correct_word, guess)
+        tiles = zip(guess, results)
+        return render_template("index.html", tiles=tiles, valid=True)
+        
     if guess not in w_allowed:
-        return f'<strong>{guess}</strong> is not an allowable guess'
+        results = ['tbd' for letter in guess]
+        tiles = zip(guess, results)
+        # return f'<strong>{guess}</strong> is not an allowable guess'
+        return render_template("index.html", tiles=tiles, valid=False)
+    # TODO: if the guess is repeated, don't increment histories
+    # TODO: continue here to implement display of current and past guesses
+    # evaluate 
     else:
         results = evaluate_guess(correct_word, guess)
         letters_used.update(set(guess))
         guesses.append(guess)
+        results_history.append(results)
         # Use len(guesses) to track the number of guesses
         return (f'You guessed: <strong>{guess}</strong>\n'
                 f'the results are: {results}\n'
@@ -62,11 +78,11 @@ def evaluate_guess(correct_word: str, guess: str) -> list:
         return None
     results = []
     for i, c in enumerate(guess):
-        result = 'not_in'
+        result = 'absent'
         if c in correct_word:
-            result = 'in_word'
+            result = 'present'
         if c == correct_word[i]:
-            result = 'in_place'
+            result = 'correct'
         results.append(result)
     return results
     
