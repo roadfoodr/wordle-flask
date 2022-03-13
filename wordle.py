@@ -29,7 +29,7 @@ correct_word = random.choice(w_answers)
 
 @app.route("/")
 def hello_world():
-    return render_template("index.html", turns=turns, tiles=[], 
+    return render_template("wordle.html", turns=turns, tiles=[], 
                            guesses_remaining = guesses_remaining,
                            valid=True, gamestate='pending')
 
@@ -37,7 +37,7 @@ def hello_world():
 def wizmode():
     results = evaluate_guess(correct_word, correct_word)
     tiles = zip(correct_word, results)
-    return render_template("index.html", turns=turns, tiles=tiles, 
+    return render_template("wordle.html", turns=turns, tiles=tiles, 
                            guesses_remaining=guesses_remaining,
                            letters_used=letters_used,
                            valid=True, gamestate='pending')
@@ -49,7 +49,7 @@ def process_guess(guess):
     if guess not in w_allowed:
         results = ['tbd' for letter in guess]
         tiles = zip(guess, results)
-        return render_template("index.html", turns=turns, tiles=tiles, 
+        return render_template("wordle.html", turns=turns, tiles=tiles, 
                            guesses_remaining=guesses_remaining,
                            letters_used=letters_used,
                            valid=False, gamestate='pending')
@@ -63,7 +63,7 @@ def process_guess(guess):
     turns.append(tiles)
     letters_used.update(set(guess))
     guesses_remaining -= 1
-    return render_template("index.html", turns=turns[:-1], tiles=turns[-1], 
+    return render_template("wordle.html", turns=turns[:-1], tiles=turns[-1], 
                        guesses_remaining=guesses_remaining,
                        letters_used=letters_used,
                        valid=True, gamestate='pending')
