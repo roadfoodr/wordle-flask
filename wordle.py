@@ -2,6 +2,7 @@ from flask import Flask, render_template
 import random
 from datetime import date
 import json
+import string
 # import sys
 
 app = Flask(__name__)
@@ -10,8 +11,8 @@ MAX_GUESSES = 6
 
 turns = []
 guesses_remaining = MAX_GUESSES
-letters_used = set()
 gamestate = 'pending'
+letter_result_map = {letter:'' for letter in string.ascii_lowercase}
 
 
 with open("./data/w_answers.json", 'r') as f:
@@ -31,15 +32,16 @@ correct_word = random.choice(w_answers)
 def hello_world():
     return render_template("wordle.html", turns=turns, tiles=[], 
                            guesses_remaining = guesses_remaining,
+                           letter_result_map=letter_result_map,
                            valid=True, gamestate='pending')
 
 @app.route("/wizmode")
 def wizmode():
-    results = evaluate_guess(correct_word, correct_word)
+    results = evaluate_guess(correct_word, correct_word, False)
     tiles = zip(correct_word, results)
     return render_template("wordle.html", turns=turns, tiles=tiles, 
                            guesses_remaining=guesses_remaining,
-                           letters_used=letters_used,
+                           letter_result_map=letter_result_map,
                            valid=True, gamestate='pending')
 
 @app.route("/guess/<string:guess>")
@@ -51,7 +53,7 @@ def process_guess(guess):
         tiles = zip(guess, results)
         return render_template("wordle.html", turns=turns, tiles=tiles, 
                            guesses_remaining=guesses_remaining,
-                           letters_used=letters_used,
+                           letter_result_map=letter_result_map,
                            valid=False, gamestate='pending')
     if guess == 'random':
         guess = random.choice(w_allowed)
@@ -61,20 +63,19 @@ def process_guess(guess):
     results = evaluate_guess(correct_word, guess)
     tiles = list(zip(guess, results))  # Jinja not able to work easily with zip iterator
     turns.append(tiles)
-    letters_used.update(set(guess))
     guesses_remaining -= 1
     return render_template("wordle.html", turns=turns[:-1], tiles=turns[-1], 
                        guesses_remaining=guesses_remaining,
-                       letters_used=letters_used,
+                       letter_result_map=letter_result_map,
                        valid=True, gamestate='pending')
 
 
-@app.errorhandler(404) 
+@app.errorhandler(404)
 def invalid_route(e):
     return "<p>Something is wrong</p>"
 
 
-def evaluate_guess(correct_word: str, guess: str) -> list:
+def evaluate_guess(correct_word: str, guess: str, update_map: bool=True) -> list:
     if len(correct_word) != len(guess):
         return None
     results = []
@@ -85,4 +86,7 @@ def evaluate_guess(correct_word: str, guess: str) -> list:
         if c == correct_word[i]:
             result = 'correct'
         results.append(result)
+        if update_map:
+            # issue: result in map could be "downgraded" from correct to present
+            letter_result_map[c] = result
     return results
