@@ -10,23 +10,14 @@
                 integrity="sha384-Uu6IeWbM+gzNVXJcM9XV3SohHtmWE+3VGi496jvgX1jyvDTXfdK+rfZc8C1Aehk5" 
                 crossorigin="anonymous">
         <link rel="stylesheet" href="https://unpkg.com/purecss@2.0.6/build/grids-responsive-min.css">
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}" />
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/wordle.css') }}" />
     </head>
     <body>
 
     <div class="content">
         <h1>An Approximation of Wordle</h1>
-        {#
-        <div class="pure-u-1">
-            <div class="tile pure-u-1-12" data-state="tbd" d>t</div>
-            <div class="tile pure-u-1-12" data-state="absent" d>a</div>
-            <div class="tile pure-u-1-12" data-state="absent" d>r</div>
-            <div class="tile pure-u-1-12" data-state="absent" d>t</div>
-            <div class="tile pure-u-1-12" data-state="correct" d>s</div>
-        </div>
-        #}
-        
-        {# Expecting: a list of past turns, plus one new set of tiles #}
+                
+        {# Expecting: a list of past turns, plus one new turn (set of tiles) #}
         {# Each turn is a list of tuples: (letter, result class)  #}
         
         {% for turn in turns %}
