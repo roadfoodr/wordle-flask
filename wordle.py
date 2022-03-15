@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, request, render_template
 import random
 from datetime import date
 import json
@@ -20,7 +20,7 @@ with open("./data/w_answers.json", 'r') as f:
 
 with open("./data/w_allowed.json", 'r') as f:
     w_allowed = json.load(f)
-w_allowed = list(set(w_answers + w_allowed + ['random']))
+w_allowed = list(set(w_answers + w_allowed + ['random', 'wizmode']))
 
 # During the current day, choose the same word
 rseed = int(date.today().strftime('%Y%m%d'))
@@ -29,6 +29,7 @@ correct_word = random.choice(w_answers)
 
 
 @app.route("/")
+@app.route("/guess", methods=['GET'])
 def hello_world():
     return render_template("wordle.html", turns=turns, tiles=[], 
                            guesses_remaining = guesses_remaining,
@@ -43,23 +44,43 @@ def wizmode():
                            guesses_remaining=guesses_remaining,
                            letter_result_map=letter_result_map,
                            valid=True, gamestate='pending')
-
-@app.route("/guess/<string:guess>")
-def process_guess(guess):
+    
+@app.route("/guess", methods=['POST'])
+def process_guess():
     global guesses_remaining
-    guess=guess.lower()
+    valid = True
+    guess = request.form['submit-guess'].lower()
+    
+    error_message = ''
     if guess not in w_allowed:
+        error_message = 'Not an allowable guess:'
+
+    if not guess:
+         error_message = 'Please submit a guess'
+       
+    past_guesses = []
+    for past_turn in turns:
+        past_guess = "".join(letter for letter, past_result in past_turn)
+        past_guesses.append(past_guess)            
+    if guess in past_guesses:
+        error_message = 'Word previously guessed:'
+       
+    if error_message:
         results = ['tbd' for letter in guess]
         tiles = zip(guess, results)
+        valid = False
         return render_template("wordle.html", turns=turns, tiles=tiles, 
                            guesses_remaining=guesses_remaining,
                            letter_result_map=letter_result_map,
-                           valid=False, gamestate='pending')
+                           error_message=error_message,
+                           valid=valid, gamestate='pending')
+    
+    if guess == 'wizmode':
+        return wizmode()
+    
     if guess == 'random':
         guess = random.choice(w_allowed)
         
-    # TODO: if the guess is repeated, don't increment histories
-    # TODO: sort letters used
     results = evaluate_guess(correct_word, guess)
     tiles = list(zip(guess, results))  # Jinja not able to work easily with zip iterator
     turns.append(tiles)
@@ -67,7 +88,7 @@ def process_guess(guess):
     return render_template("wordle.html", turns=turns[:-1], tiles=turns[-1], 
                        guesses_remaining=guesses_remaining,
                        letter_result_map=letter_result_map,
-                       valid=True, gamestate='pending')
+                       valid=valid, gamestate='pending')
 
 
 @app.errorhandler(404)

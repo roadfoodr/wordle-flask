@@ -31,7 +31,7 @@
         
         <div class="pure-u-1">
             {% if valid == False %}
-                <h3 class="error">Not an allowable guess:</h3>
+                <h3 class="error">{{error_message}}</h3>
             {% endif %}
             {% for letter, result in tiles %}
                 <div class="tile pure-u-1-12" data-state="{{result}}">{{letter}}</div>
@@ -39,6 +39,15 @@
         </div>
         
         <h3>Guesses remaining: {{guesses_remaining}}</h3>
+        
+        
+        <form class="pure-form" action="/guess", method='post'>
+            <fieldset>
+                <input type="text" placeholder="Guess" name="submit-guess" autofocus/>
+                <button type="submit" class="pure-button">Submit</button>
+            </fieldset>
+        </form>
+        
         
         <h4>Letters used:</h4>
         <div class="pure-u-7-24 sm-button-row">

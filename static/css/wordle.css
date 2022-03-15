@@ -140,6 +140,20 @@ h1 {margin-bottom: 1.25em;}
 }
   
 .sm-button-row {
-      line-height: 2.75em;
+    line-height: 2.75em;
   }
 
+.pure-form input[type=text] {
+    text-transform:uppercase;
+    text-align: center;
+}
+
+.pure-form input[type=text]:focus {
+    outline: 0;
+    border-color: #333333;
+}
+
+.pure-button, a.pure-button {
+    background-color: var(--key-bg-correct);
+    color: #fff;
+}
