@@ -40,17 +40,16 @@
         
         <h3>Guesses remaining: {{guesses_remaining}}</h3>
         
-        
         <form class="pure-form" action="/guess", method='post'>
             <fieldset>
-                <input type="text" placeholder="Guess" name="submit-guess" autofocus/>
+                <input type="text" placeholder="Guess" name="submit-guess" size="10" autofocus/>
                 <button type="submit" class="pure-button">Submit</button>
             </fieldset>
         </form>
-        
+
         
         <h4>Letters used:</h4>
-        <div class="pure-u-7-24 sm-button-row">
+        <div class="pure-u-7-8 pure-u-sm-2-3 pure-u-md-3-8 pure-u-lg-7-24 pure-u-xl-1-4 sm-button-row">
             {% for letter, result in letter_result_map.items() %}
                 <span class="sm-button" data-state="{{result}}">{{letter}}</span>
             {% endfor %}

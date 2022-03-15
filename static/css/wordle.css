@@ -146,6 +146,8 @@ h1 {margin-bottom: 1.25em;}
 .pure-form input[type=text] {
     text-transform:uppercase;
     text-align: center;
+    display: inline-block;
+    margin: 0 5px 0 0;
 }
 
 .pure-form input[type=text]:focus {
@@ -153,7 +155,10 @@ h1 {margin-bottom: 1.25em;}
     border-color: #333333;
 }
 
-.pure-button, a.pure-button {
+.pure-form button[type=submit] {
     background-color: var(--key-bg-correct);
     color: #fff;
+    display: inline-block;
+    margin: 0;
 }
+
