@@ -30,10 +30,10 @@
         {% endfor %}
         
         <div class="pure-u-1">
-            {% if valid == False %}
+            {% if error_message %}
                 <h3 class="error">{{error_message}}</h3>
             {% endif %}
-            {% for letter, result in tiles %}
+            {% for letter, result in extra_tiles %}
                 <div class="tile pure-u-1-12" data-state="{{result}}">{{letter}}</div>
             {% endfor %}
         </div>

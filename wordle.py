@@ -31,24 +31,23 @@ correct_word = random.choice(w_answers)
 @app.route("/")
 @app.route("/guess", methods=['GET'])
 def hello_world():
-    return render_template("wordle.html", turns=turns, tiles=[], 
+    return render_template("wordle.html", turns=turns, 
                            guesses_remaining = guesses_remaining,
                            letter_result_map=letter_result_map,
-                           valid=True, gamestate='pending')
+                           gamestate='pending')
 
 @app.route("/wizmode")
 def wizmode():
     results = evaluate_guess(correct_word, correct_word, False)
-    tiles = zip(correct_word, results)
-    return render_template("wordle.html", turns=turns, tiles=tiles, 
+    extra_tiles = zip(correct_word, results)
+    return render_template("wordle.html", turns=turns, extra_tiles=extra_tiles, 
                            guesses_remaining=guesses_remaining,
                            letter_result_map=letter_result_map,
-                           valid=True, gamestate='pending')
+                           gamestate='pending')
     
 @app.route("/guess", methods=['POST'])
 def process_guess():
     global guesses_remaining
-    valid = True
     guess = request.form['submit-guess'].lower()
     
     error_message = ''
@@ -67,13 +66,12 @@ def process_guess():
        
     if error_message:
         results = ['tbd' for letter in guess]
-        tiles = zip(guess, results)
-        valid = False
-        return render_template("wordle.html", turns=turns, tiles=tiles, 
+        extra_tiles = zip(guess, results)
+        return render_template("wordle.html", turns=turns, extra_tiles=extra_tiles, 
                            guesses_remaining=guesses_remaining,
                            letter_result_map=letter_result_map,
                            error_message=error_message,
-                           valid=valid, gamestate='pending')
+                           gamestate='pending')
     
     if guess == 'wizmode':
         return wizmode()
@@ -82,13 +80,14 @@ def process_guess():
         guess = random.choice(w_allowed)
         
     results = evaluate_guess(correct_word, guess)
-    tiles = list(zip(guess, results))  # Jinja not able to work easily with zip iterator
-    turns.append(tiles)
+    # Convert to list because Jinja not able to work easily with zip iterator
+    new_tiles = list(zip(guess, results))  
+    turns.append(new_tiles)
     guesses_remaining -= 1
-    return render_template("wordle.html", turns=turns[:-1], tiles=turns[-1], 
+    return render_template("wordle.html", turns=turns, 
                        guesses_remaining=guesses_remaining,
                        letter_result_map=letter_result_map,
-                       valid=valid, gamestate='pending')
+                       gamestate='pending')
 
 
 @app.errorhandler(404)
