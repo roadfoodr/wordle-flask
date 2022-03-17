@@ -1,11 +1,13 @@
-from flask import Flask, request, render_template
+from flask import Flask, flash, render_template, request, session
 import random
 from datetime import date
 import json
 import string
+import os
 # import sys
 
 app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY')
 
 MAX_GUESSES = 6
 
@@ -49,43 +51,39 @@ def wizmode():
 @app.route("/guess", methods=['POST'])
 def process_guess():
     global guesses_remaining
+    extra_tiles = []
     guess = request.form['submit-guess'].lower()
+
+    if guess == 'wizmode':
+        return wizmode()
+
+    if guess == 'random':
+        guess = random.choice(w_allowed)
     
-    error_message = ''
-    if guess not in w_allowed:
-        error_message = 'Not an allowable guess:'
+    if guess and guess not in w_allowed:
+        flash('Not an allowable guess:')
 
     if not guess:
-         error_message = 'Please submit a guess'
-       
+         flash('Please submit a guess')
+
     past_guesses = []
     for past_turn in turns:
         past_guess = "".join(letter for letter, past_result in past_turn)
         past_guesses.append(past_guess)            
     if guess in past_guesses:
-        error_message = 'Word previously guessed:'
-       
-    if error_message:
+        flash('Word previously guessed:')
+
+    if session.get('_flashes'):
         results = ['tbd' for letter in guess]
         extra_tiles = zip(guess, results)
-        return render_template("wordle.html", turns=turns, extra_tiles=extra_tiles, 
-                           guesses_remaining=guesses_remaining,
-                           letter_result_map=letter_result_map,
-                           error_message=error_message,
-                           gamestate='pending')
-    
-    if guess == 'wizmode':
-        return wizmode()
-    
-    if guess == 'random':
-        guess = random.choice(w_allowed)
+    else:
+        results = evaluate_guess(correct_word, guess)
+        # Convert to list because Jinja not able to work easily with zip iterator
+        new_tiles = list(zip(guess, results))  
+        turns.append(new_tiles)
+        guesses_remaining -= 1
         
-    results = evaluate_guess(correct_word, guess)
-    # Convert to list because Jinja not able to work easily with zip iterator
-    new_tiles = list(zip(guess, results))  
-    turns.append(new_tiles)
-    guesses_remaining -= 1
-    return render_template("wordle.html", turns=turns, 
+    return render_template("wordle.html", turns=turns, extra_tiles=extra_tiles,
                        guesses_remaining=guesses_remaining,
                        letter_result_map=letter_result_map,
                        gamestate='pending')
