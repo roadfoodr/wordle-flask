@@ -20,7 +20,8 @@ with open("./data/w_answers.json", 'r') as f:
 
 with open("./data/w_allowed.json", 'r') as f:
     w_allowed = json.load(f)
-w_allowed = list(set(w_answers + w_allowed + ['random', 'wizmode']))
+game_commands = ['random', 'wizmode']
+w_allowed = list(set(w_answers + w_allowed + game_commands))
 
 # During the current day, choose the same word
 rseed = int(date.today().strftime('%Y%m%d'))
