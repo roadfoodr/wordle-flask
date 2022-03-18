@@ -7,7 +7,7 @@ import os
 # import sys
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY')
+app.secret_key = os.environ.get('SECRET_KEY', 'dev')
 
 MAX_GUESSES = 6
 
@@ -23,7 +23,8 @@ with open("./data/w_answers.json", 'r') as f:
 with open("./data/w_allowed.json", 'r') as f:
     w_allowed = json.load(f)
 game_commands = ['random', 'wizmode']
-w_allowed = list(set(w_answers + w_allowed + game_commands))
+w_allowed = list(set(w_answers + w_allowed))
+entries_allowed = list(set(game_commands + w_allowed))
 
 # During the current day, choose the same word
 rseed = int(date.today().strftime('%Y%m%d'))
@@ -60,7 +61,7 @@ def process_guess():
     if guess == 'random':
         guess = random.choice(w_allowed)
     
-    if guess and guess not in w_allowed:
+    if guess and guess not in entries_allowed:
         flash('Not an allowable guess:')
 
     if not guess:
