@@ -21,7 +21,7 @@
         {# Expecting: a list of past turns, plus one new turn (set of tiles) #}
         {# Each turn is a list of tuples: (letter, result class)  #}
         
-        {% for turn in turns %}
+        {% for turn in session['turns'] %}
             <div class="pure-u-1">
                 {% for letter, result in turn %}
                 <div class="tile pure-u-1-12" data-state="{{result}}" d>{{letter}}</div>
@@ -30,17 +30,21 @@
         {% endfor %}
         
         <div class="pure-u-1">
-        {% with flashed_messages = get_flashed_messages() %}
+        {% with flashed_messages = get_flashed_messages(category_filter=['user_message']) %}
             {% for flashed_message in flashed_messages %}
                 <h3 class="error">{{flashed_message}}</h3>
             {% endfor %}
         {% endwith %}
-            {% for letter, result in extra_tiles %}
-                <div class="tile pure-u-1-12" data-state="{{result}}">{{letter}}</div>
+        {% with flashed_tiles = get_flashed_messages(category_filter=['extra_tiles']) %}
+            {% for flashed_tile in flashed_tiles %}
+                {% for letter, result in flashed_tile %}
+                    <div class="tile pure-u-1-12" data-state="{{result}}">{{letter}}</div>
+                {% endfor %}
             {% endfor %}
+        {% endwith %}
         </div>
         
-        <h3>Guesses remaining: {{guesses_remaining}}</h3>
+        <h3>Guesses remaining: {{session['guesses_remaining']}}</h3>
         
         <form class="pure-form" action="/guess", method='post'>
             <fieldset>
@@ -52,7 +56,7 @@
         
         <h4>Letters used:</h4>
         <div class="pure-u-7-8 pure-u-sm-2-3 pure-u-md-3-8 pure-u-lg-7-24 pure-u-xl-1-4 sm-button-row">
-            {% for letter, result in letter_result_map.items() %}
+            {% for letter, result in session['letter_result_map'].items() %}
                 <span class="sm-button" data-state="{{result}}">{{letter}}</span>
             {% endfor %}
         </div>

@@ -1,6 +1,9 @@
-from flask import Flask, flash, render_template, request, session
+from flask import (
+    Flask, flash, make_response, redirect, render_template, 
+    request, session, url_for
+    )
 import random
-from datetime import date
+from datetime import date, datetime
 import json
 import string
 import os
@@ -11,50 +14,61 @@ app.secret_key = os.environ.get('SECRET_KEY', 'dev')
 
 MAX_GUESSES = 6
 
-turns = []
-guesses_remaining = MAX_GUESSES
-gamestate = 'pending'
-letter_result_map = {letter:'' for letter in string.ascii_lowercase}
-
 
 with open("./data/w_answers.json", 'r') as f:
     w_answers = json.load(f)
 
 with open("./data/w_allowed.json", 'r') as f:
     w_allowed = json.load(f)
-game_commands = ['random', 'wizmode']
+game_commands = ['newgame', 'random', 'wizmode']
 w_allowed = list(set(w_answers + w_allowed))
 entries_allowed = list(set(game_commands + w_allowed))
 
-# During the current day, choose the same word
-rseed = int(date.today().strftime('%Y%m%d'))
-random.seed(rseed)
-correct_word = random.choice(w_answers)
+
+@app.before_request 
+def initialize_session(): 
+    if not session:
+        session['turns'] = []
+        session['guesses_remaining'] = MAX_GUESSES
+        session['gamestate'] = 'pending'
+        session['letter_result_map'] = {letter:'' for letter in string.ascii_lowercase}
+        # During the current day, choose the same word each time
+        rseed = int(date.today().strftime('%Y%m%d'))
+        random.seed(rseed)
+        session['correct_word'] = random.choice(w_answers)
+        # reset seed so different players don't get the same sequence
+        random.seed(random.seed(datetime.now()))
 
 
 @app.route("/")
-@app.route("/guess", methods=['GET'])
-def hello_world():
-    return render_template("wordle.html", turns=turns, 
-                           guesses_remaining = guesses_remaining,
-                           letter_result_map=letter_result_map,
-                           gamestate='pending')
+# @app.route("/guess", methods=['GET'])
+def index():
+    return render_template("wordle.html")
+
+@app.route("/session")
+def show_session():
+    return session
+
+@app.route("/newgame")
+def newgame():
+    session.clear()
+    return redirect(url_for('index'))
 
 @app.route("/wizmode")
 def wizmode():
-    results = evaluate_guess(correct_word, correct_word, False)
-    extra_tiles = zip(correct_word, results)
-    return render_template("wordle.html", turns=turns, extra_tiles=extra_tiles, 
-                           guesses_remaining=guesses_remaining,
-                           letter_result_map=letter_result_map,
-                           gamestate='pending')
+    results = evaluate_guess(session['correct_word'], 
+                             session['correct_word'], False)
+    flash('The secret word is:', 'user_message')
+    flash(list(zip(session['correct_word'], results)), 'extra_tiles')
+    return redirect(url_for('index'))
     
 @app.route("/guess", methods=['POST'])
 def process_guess():
-    global guesses_remaining
-    extra_tiles = []
     guess = request.form['submit-guess'].lower()
 
+    if guess == 'newgame':
+        return newgame()
+    
     if guess == 'wizmode':
         return wizmode()
 
@@ -62,37 +76,33 @@ def process_guess():
         guess = random.choice(w_allowed)
     
     if guess and guess not in entries_allowed:
-        flash('Not an allowable guess:')
+        flash('Not an allowable guess:', 'user_message')
 
     if not guess:
-         flash('Please submit a guess')
+        flash('Please submit a guess', 'user_message')
 
     past_guesses = []
-    for past_turn in turns:
+    for past_turn in session['turns']:
         past_guess = "".join(letter for letter, past_result in past_turn)
         past_guesses.append(past_guess)            
     if guess in past_guesses:
-        flash('Word previously guessed:')
+        flash('Word previously guessed:', 'user_message')
 
-    if session.get('_flashes'):
+    if session.get('_flashes'):  # there has been an error message
         results = ['tbd' for letter in guess]
-        extra_tiles = zip(guess, results)
+        flash(list(zip(guess, results)), 'extra_tiles')
     else:
-        results = evaluate_guess(correct_word, guess)
-        # Convert to list because Jinja not able to work easily with zip iterator
+        results = evaluate_guess(session['correct_word'], guess)
         new_tiles = list(zip(guess, results))  
-        turns.append(new_tiles)
-        guesses_remaining -= 1
+        session['turns'].append(new_tiles)
+        session['guesses_remaining'] -= 1
         
-    return render_template("wordle.html", turns=turns, extra_tiles=extra_tiles,
-                       guesses_remaining=guesses_remaining,
-                       letter_result_map=letter_result_map,
-                       gamestate='pending')
+    return redirect(url_for('index'))
 
 
 @app.errorhandler(404)
 def invalid_route(e):
-    return "<p>Something is wrong</p>"
+    return make_response("<p>Something is wrong</p>", 404)
 
 
 def evaluate_guess(correct_word: str, guess: str, update_map: bool=True) -> list:
@@ -108,5 +118,7 @@ def evaluate_guess(correct_word: str, guess: str, update_map: bool=True) -> list
         results.append(result)
         if update_map:
             # issue: result in map could be "downgraded" from correct to present
-            letter_result_map[c] = result
+            session['letter_result_map'][c] = result
     return results
+
+
