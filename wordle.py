@@ -20,9 +20,16 @@ with open("./data/w_answers.json", 'r') as f:
 
 with open("./data/w_allowed.json", 'r') as f:
     w_allowed = json.load(f)
-game_commands = ['newgame', 'random', 'wizmode']
+game_commands = {'restart': "Restart the game with today's secret word", 
+                 'newgame': 'Restart the game with a random new secret word',
+                 'newword': 'Follow by <word> to restart with a specified secret word', 
+                 'random': 'Submit a random (allowable) guess', 
+                 'hint': 'Display some words that match constraints known so far',
+                 'wizmode': 'Temporarily reveal the current secret word',
+                 'help': 'Display this list of game commands'
+                 }
 w_allowed = list(set(w_answers + w_allowed))
-entries_allowed = list(set(game_commands + w_allowed))
+entries_allowed = list(set(w_allowed + list(game_commands)))
 
 
 @app.before_request 
@@ -36,7 +43,7 @@ def initialize_session():
         rseed = int(date.today().strftime('%Y%m%d'))
         random.seed(rseed)
         session['correct_word'] = random.choice(w_answers)
-        # reset seed so different players don't get the same sequence
+        # reset global seed so different players don't get the same sequence
         random.seed(random.seed(datetime.now()))
 
 
@@ -49,9 +56,17 @@ def index():
 def show_session():
     return session
 
+@app.route("/restart")
+def restart():
+    session.clear()
+    return redirect(url_for('index'))
+
 @app.route("/newgame")
 def newgame():
     session.clear()
+    initialize_session()
+    random.seed(random.seed(datetime.now()))
+    session['correct_word'] = random.choice(w_answers)
     return redirect(url_for('index'))
 
 @app.route("/wizmode")
@@ -66,9 +81,12 @@ def wizmode():
 def process_guess():
     guess = request.form['submit-guess'].lower()
 
+    if guess == 'restart':
+        return restart()
+    
     if guess == 'newgame':
         return newgame()
-    
+
     if guess == 'wizmode':
         return wizmode()
 
