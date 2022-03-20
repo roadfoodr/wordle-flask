@@ -10,6 +10,7 @@
                 integrity="sha384-Uu6IeWbM+gzNVXJcM9XV3SohHtmWE+3VGi496jvgX1jyvDTXfdK+rfZc8C1Aehk5" 
                 crossorigin="anonymous">
         <link rel="stylesheet" href="https://unpkg.com/purecss@2.0.6/build/grids-responsive-min.css">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}" />
         <link rel="stylesheet" href="{{ url_for('static', filename='css/wordle.css') }}" />
         <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
     </head>
@@ -50,10 +51,10 @@
             <fieldset>
                 <input type="text" placeholder="Guess" name="submit-guess" size="10" autofocus/>
                 <button type="submit" class="pure-button">Submit</button>
+         		<a href="#help" class="sm-button" title="Game Commands">?</a>
             </fieldset>
         </form>
-
-        
+       
         <h4>Letters used:</h4>
         <div class="pure-u-7-8 pure-u-sm-2-3 pure-u-md-3-8 pure-u-lg-7-24 pure-u-xl-1-4 sm-button-row">
             {% for letter, result in session['letter_result_map'].items() %}
@@ -61,7 +62,8 @@
             {% endfor %}
         </div>
 
-        
+  		{% include 'includes/help_modal.html' %}
+       
     </div>
 
     </body>

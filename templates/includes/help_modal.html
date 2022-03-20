@@ -1,0 +1,36 @@
+{# modal for help display #}
+
+{% block body %}
+
+<section class="modal--show" id="help" tabindex="-1"
+        role="dialog" aria-labelledby="modal-label" aria-hidden="true">
+
+    <div class="modal-inner">
+        <header id="modal-label">
+            <h2 id="modal-label">Game Commands</h2>
+        </header>
+        <div class="modal-content">
+            <table class='pure-table'>
+                {% for command, description in session['game_commands'].items() %}
+                <tr>
+                    <td>{{command.upper()}}:</td> <td>{{description}}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+
+    <a href="" class="modal-close" title="Close this help window" data-close="Close"
+        data-dismiss="modal">?</a>
+</section>
+
+{% endblock %}
+
+
+
+
+ 
+ 
+ 
+ 
+

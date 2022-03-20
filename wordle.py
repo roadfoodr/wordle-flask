@@ -1,5 +1,5 @@
 from flask import (
-    Flask, flash, make_response, redirect, render_template, 
+    Flask, flash, make_response, redirect, render_template,
     request, session, url_for
     )
 import random
@@ -17,14 +17,13 @@ MAX_GUESSES = 6
 
 with open("./data/w_answers.json", 'r') as f:
     w_answers = json.load(f)
-
 with open("./data/w_allowed.json", 'r') as f:
     w_allowed = json.load(f)
 game_commands = {'restart': "Restart the game with today's secret word", 
                  'newgame': 'Restart the game with a random new secret word',
-                 'newword': 'Follow by <word> to restart with a specified secret word', 
+                 # 'newword': 'Follow by <word> to restart with a specified secret word', 
                  'random': 'Submit a random (allowable) guess', 
-                 'hint': 'Display some words that match constraints known so far',
+                 # 'hint': 'Display some words that match constraints known so far',
                  'wizmode': 'Temporarily reveal the current secret word',
                  'help': 'Display this list of game commands'
                  }
@@ -38,6 +37,7 @@ def initialize_session():
         session['turns'] = []
         session['guesses_remaining'] = MAX_GUESSES
         session['gamestate'] = 'pending'
+        session['game_commands'] = game_commands
         session['letter_result_map'] = {letter:'' for letter in string.ascii_lowercase}
         # During the current day, choose the same word each time
         rseed = int(date.today().strftime('%Y%m%d'))
@@ -48,7 +48,6 @@ def initialize_session():
 
 
 @app.route("/")
-# @app.route("/guess", methods=['GET'])
 def index():
     return render_template("wordle.html")
 
@@ -87,17 +86,26 @@ def process_guess():
     if guess == 'newgame':
         return newgame()
 
-    if guess == 'wizmode':
-        return wizmode()
+    if guess == 'newword':
+        flash('Command not implemented yet', 'user_message')
 
     if guess == 'random':
         guess = random.choice(w_allowed)
     
+    if guess == 'hint':
+        flash('Command not implemented yet', 'user_message')
+
+    if guess == 'wizmode':
+        return wizmode()
+
+    if guess == 'help':
+        return redirect(url_for('index', _anchor="help"))
+
     if guess and guess not in entries_allowed:
         flash('Not an allowable guess:', 'user_message')
 
     if not guess:
-        flash('Please submit a guess', 'user_message')
+        return redirect(url_for('index'))
 
     past_guesses = []
     for past_turn in session['turns']:
