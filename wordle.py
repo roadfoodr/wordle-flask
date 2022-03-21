@@ -21,7 +21,7 @@ with open("./data/w_allowed.json", 'r') as f:
     w_allowed = json.load(f)
 game_commands = {'restart': "Restart the game with today's secret word", 
                  'newgame': 'Restart the game with a random new secret word',
-                 # 'newword': 'Follow by <word> to restart with a specified secret word', 
+                 'newword': 'Follow by <word> to restart with a specified secret word', 
                  'random': 'Submit a random (allowable) guess', 
                  # 'hint': 'Display some words that match constraints known so far',
                  'wizmode': 'Temporarily reveal the current secret word',
@@ -68,6 +68,23 @@ def newgame():
     session['correct_word'] = random.choice(w_answers)
     return redirect(url_for('index'))
 
+@app.route("/newword/<new_word>")
+def newword(new_word=''):
+    new_word = new_word.lower()
+    if new_word not in w_answers:
+        if new_word:
+            flash('Not an allowable secret word:', 'user_message')
+            results = ['tbd' for letter in new_word]
+            flash(list(zip(new_word, results)), 'extra_tiles')
+        else:
+            flash('You must supply a secret word', 'user_message')
+    else:
+        session.clear()
+        initialize_session()
+        session['correct_word'] = new_word
+    return redirect(url_for('index'))
+
+
 @app.route("/wizmode")
 def wizmode():
     results = evaluate_guess(session['correct_word'], 
@@ -86,8 +103,11 @@ def process_guess():
     if guess == 'newgame':
         return newgame()
 
-    if guess == 'newword':
-        flash('Command not implemented yet', 'user_message')
+    if guess.startswith('newword'):
+        guess = guess.removeprefix('newword')  # requires Python 3.9
+        # only keep alpha characters
+        guess = "".join(c for c in guess if c.isalpha())
+        return newword(guess)
 
     if guess == 'random':
         guess = random.choice(w_allowed)
@@ -105,6 +125,7 @@ def process_guess():
         flash('Not an allowable guess:', 'user_message')
 
     if not guess:
+        flash('Please submit a guess or game command (try HELP)', 'user_message')
         return redirect(url_for('index'))
 
     past_guesses = []
