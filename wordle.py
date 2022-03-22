@@ -36,7 +36,7 @@ def initialize_session():
     if not session:
         session['turns'] = []
         session['guesses_remaining'] = MAX_GUESSES
-        session['gamestate'] = 'pending'
+        session['gamestate'] = 'in-progress'
         session['game_commands'] = game_commands
         session['letter_result_map'] = {letter:'' for letter in string.ascii_lowercase}
         # During the current day, choose the same word each time
@@ -45,7 +45,6 @@ def initialize_session():
         session['correct_word'] = random.choice(w_answers)
         # reset global seed so different players don't get the same sequence
         random.seed(random.seed(datetime.now()))
-
 
 @app.route("/")
 def index():
@@ -87,8 +86,7 @@ def newword(new_word=''):
 
 @app.route("/wizmode")
 def wizmode():
-    results = evaluate_guess(session['correct_word'], 
-                             session['correct_word'], False)
+    results = ['tbd' for letter in session['correct_word']]
     flash('The secret word is:', 'user_message')
     flash(list(zip(session['correct_word'], results)), 'extra_tiles')
     return redirect(url_for('index'))
@@ -109,41 +107,52 @@ def process_guess():
         guess = "".join(c for c in guess if c.isalpha())
         return newword(guess)
 
-    if guess == 'random':
-        guess = random.choice(w_allowed)
-    
-    if guess == 'hint':
-        flash('Command not implemented yet', 'user_message')
-
     if guess == 'wizmode':
         return wizmode()
 
     if guess == 'help':
         return redirect(url_for('index', _anchor="help"))
-
-    if guess and guess not in entries_allowed:
-        flash('Not an allowable guess:', 'user_message')
-
-    if not guess:
-        flash('Please submit a guess or game command (try HELP)', 'user_message')
-        return redirect(url_for('index'))
-
-    past_guesses = []
-    for past_turn in session['turns']:
-        past_guess = "".join(letter for letter, past_result in past_turn)
-        past_guesses.append(past_guess)            
-    if guess in past_guesses:
-        flash('Word previously guessed:', 'user_message')
-
-    if session.get('_flashes'):  # there has been an error message
-        results = ['tbd' for letter in guess]
-        flash(list(zip(guess, results)), 'extra_tiles')
-    else:
-        results = evaluate_guess(session['correct_word'], guess)
-        new_tiles = list(zip(guess, results))  
-        session['turns'].append(new_tiles)
-        session['guesses_remaining'] -= 1
+    
+    if session['gamestate'] == 'in-progress':
         
+        if guess == 'hint':
+            flash('Command not implemented yet', 'user_message')
+
+        if guess == 'random':
+            guess = random.choice(w_allowed)    
+
+        if guess and guess not in entries_allowed:
+            flash('Not an allowable guess:', 'user_message')
+    
+        if not guess:
+            flash('Please submit a guess or game command (try HELP)', 'user_message')
+            return redirect(url_for('index'))
+    
+        past_guesses = []
+        for past_turn in session['turns']:
+            past_guess = "".join(letter for letter, past_result in past_turn)
+            past_guesses.append(past_guess)            
+        if guess in past_guesses:
+            flash('Word previously guessed:', 'user_message')
+    
+        if session.get('_flashes'):  # there has been an error message
+            results = ['tbd' for letter in guess]
+            flash(list(zip(guess, results)), 'extra_tiles')
+        else:
+            results = evaluate_guess(session['correct_word'], guess)
+            new_tiles = list(zip(guess, results))  
+            session['turns'].append(new_tiles)
+            session['guesses_remaining'] -= 1
+            if guess == session['correct_word']:
+                session['gamestate'] = 'success'
+            elif session['guesses_remaining'] < 1:
+                session['gamestate'] = 'failure'
+                flash('The correct word was:', 'user_message')
+                results = ['tbd' for letter in guess]
+                flash(list(zip(session['correct_word'], results)), 'extra_tiles')
+    else:
+        flash('Only game commands may be submitted now (try HELP)', 'user_message')
+
     return redirect(url_for('index'))
 
 

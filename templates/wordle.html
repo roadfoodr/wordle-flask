@@ -45,11 +45,23 @@
         {% endwith %}
         </div>
         
-        <h3>Guesses remaining: {{session['guesses_remaining']}}</h3>
+        {% if session['gamestate'] == 'in-progress' %}
+            <h3>Guesses remaining: {{session['guesses_remaining']}}</h3>
+        {% elif session['gamestate'] == 'success' %}
+            <h3>The game is complete. Congratulations!</h3>
+        {% elif session['gamestate'] == 'failure' %}
+            <h3>The game is complete. Please try again!</h3>
+        {% endif %}
         
         <form class="pure-form" action="/guess", method='post'>
             <fieldset>
-                <input type="text" placeholder="Guess" name="submit-guess" size="10" autofocus/>
+                <input type="text" 
+                    {% if session['gamestate'] == 'in-progress' %}
+                    placeholder="Guess"
+                    {% else %}
+                    placeholder="Command"
+                    {% endif %}
+                    name="submit-guess" size="10" autofocus/>
                 <button type="submit" class="pure-button">Submit</button>
          		<a href="#help" class="sm-button" title="Game Commands">?</a>
             </fieldset>
