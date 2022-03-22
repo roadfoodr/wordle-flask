@@ -50,10 +50,6 @@ def initialize_session():
 def index():
     return render_template("wordle.html")
 
-@app.route("/session")
-def show_session():
-    return session
-
 @app.route("/restart")
 def restart():
     session.clear()
@@ -155,6 +151,18 @@ def process_guess():
 
     return redirect(url_for('index'))
 
+
+@app.route("/admin/session")
+def show_session():
+    # extract the raw values from the SecureCookieSession object
+    session_dict = {key: val for key, val in session.items()}
+    return session_dict
+
+@app.route("/admin/clearsession")
+def clear_session():
+    session.clear()
+    return('session cleared')
+    
 
 @app.errorhandler(404)
 def invalid_route(e):
