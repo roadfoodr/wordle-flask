@@ -7,6 +7,7 @@ from datetime import date, datetime
 import json
 import string
 import os
+import re
 # import sys
 
 app = Flask(__name__)
@@ -25,13 +26,14 @@ game_commands = {'restart': "Restart the game with today's secret word",
                  'newgame': 'Restart the game with a random new secret word',
                  'newword': 'Follow by <word> to restart with a specified secret word', 
                  'random': 'Submit a random (allowable) guess', 
-                 # 'hint': 'Display some words that match constraints known so far',
+                 'hint': 'Display some words that match information known so far',
                  'wizmode': 'Temporarily reveal the current secret word',
                  'help': 'Display this list of game commands'
                  }
 w_allowed = list(set(w_answers + w_allowed))
 entries_allowed = list(set(w_allowed + list(game_commands)))
 
+WORD_LENGTH = len(random.choice(w_answers))
 
 @app.before_request 
 def initialize_session(): 
@@ -42,6 +44,8 @@ def initialize_session():
         session['game_commands'] = game_commands
         session['letter_result_map'] = {letter:'' for letter in string.ascii_lowercase}
         # During the current day, choose the same word each time
+        session['letter_position_include_list'] = list('.' * WORD_LENGTH)
+        session['letter_position_exclude_list'] = [[] for _ in range(WORD_LENGTH)]
         rseed = int(date.today().strftime('%Y%m%d'))
         random.seed(rseed)
         session['correct_word'] = random.choice(w_answers)
@@ -81,6 +85,11 @@ def newword(new_word=''):
         session['correct_word'] = new_word
     return redirect(url_for('index'))
 
+@app.route("/hint")
+def hint():
+    numhints, selected_hints = identify_hints()
+    return redirect(url_for('index'))
+
 @app.route("/wizmode")
 def wizmode():
     results = [CSS_UNKNOWN for letter in session['correct_word']]
@@ -113,7 +122,7 @@ def process_guess():
     if session['gamestate'] == 'in-progress':
         
         if guess == 'hint':
-            flash('Command not implemented yet', 'user_message')
+            return hint()
 
         if guess == 'random':
             guess = random.choice(w_allowed)    
@@ -170,7 +179,7 @@ def invalid_route(e):
     return make_response("<h3>No matching route</h3>", 404)
 
 
-def evaluate_guess(correct_word: str, guess: str, update_map: bool=True) -> list:
+def evaluate_guess(correct_word: str, guess: str, update_maps: bool=True) -> list:
     '''
     Given a correct word and a guess to evaluate against it, return a list of
     strings describing the presence or absence of letters from guess in the
@@ -180,14 +189,65 @@ def evaluate_guess(correct_word: str, guess: str, update_map: bool=True) -> list
     if len(correct_word) != len(guess):
         raise ValueError("correct_word and guess must have matching lengths")
     results = []
-    for i, c in enumerate(guess):
+    for i, char in enumerate(guess):
         result = CSS_ABSENT
-        if c in correct_word:
-            result = CSS_PRESENT
-        if c == correct_word[i]:
+        if char == correct_word[i]:
             result = CSS_CORRECT
+            if update_maps:
+                session['letter_position_include_list'][i] = char
+        elif char in correct_word:
+            result = CSS_PRESENT
+            if update_maps:
+                session['letter_position_exclude_list'][i].append(char)
         results.append(result)
-        if update_map:
-            # issue: result in map could be "downgraded" from correct to present
-            session['letter_result_map'][c] = result
+        if update_maps:
+            # don't "downgrade" letters we previously saw as correct
+            if session['letter_result_map'][char] != CSS_CORRECT:
+                session['letter_result_map'][char] = result
     return results
+
+
+def identify_hints(max_results=10):
+    '''
+    From user session, obtain the secret (correct) word and information about 
+    correct, present, absent letters known so far in the game.  Return the
+    number and (length-limited) list of possible answers consistent with known
+    info.
+    '''
+    # letters known to be in certain positions
+    correct_r = re.compile("".join(session['letter_position_include_list']))
+    hints = list(filter(correct_r.match, w_answers))
+    
+    # letters known not to be in certain positions
+    exclude_r_string = ''.join(
+        ['[^'+''.join(position_list)+']' if position_list
+         else '.'
+         for position_list in session['letter_position_exclude_list']]
+        )
+    # print(exclude_r_string, file=sys.stdout)
+    # sys.stdout.flush()
+    exclude_r = re.compile(exclude_r_string)
+    hints = list(filter(exclude_r.match, hints))
+
+    # letters known to be present in word
+    present_letters = [letter for letter, result 
+                       in session['letter_result_map'].items()
+                       if result == CSS_PRESENT]
+    for letter in present_letters:
+        hints = list(filter(lambda x: (letter in x), hints))
+
+    # letters known not to be present in word
+    absent_letters = [letter for letter, result 
+                       in session['letter_result_map'].items()
+                       if result == CSS_ABSENT]
+    for letter in absent_letters:
+        hints = list(filter(lambda x: (letter not in x), hints))
+    
+    num_hints = len(hints)
+    sampled_hints = random.sample(hints, min(num_hints, max_results))
+    
+    session['num_hints'] = num_hints
+    session['sampled_hints'] = sampled_hints
+    
+    return (num_hints, sampled_hints)
+    

@@ -67,6 +67,8 @@
             </fieldset>
         </form>
        
+       <p>{{session['num_hints']}}
+       <p>{{session['sampled_hints']}}
         <h4>Letters used:</h4>
         <div class="pure-u-7-8 pure-u-sm-2-3 pure-u-md-3-8 pure-u-lg-7-24 pure-u-xl-1-4 sm-button-row">
             {% for letter, result in session['letter_result_map'].items() %}
