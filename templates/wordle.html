@@ -19,9 +19,8 @@
     <div class="content">
         <h1>An Approximation of Wordle</h1>
                 
-        {# Expecting: a list of past turns, plus one new turn (set of tiles) #}
-        {# Each turn is a list of tuples: (letter, result class)  #}
-        
+        {# Expecting from session: a list of turns so far #}
+        {# Each turn is a list of tuples: (<letter>, <result css class>)  #}
         {% for turn in session['turns'] %}
             <div class="pure-u-1">
                 {% for letter, result in turn %}
@@ -30,6 +29,7 @@
             </div>
         {% endfor %}
         
+        {# Additional user messages, potentially including some in "turn" format #}
         <div class="pure-u-1">
         {% with flashed_messages = get_flashed_messages(category_filter=['user_message']) %}
             {% for flashed_message in flashed_messages %}

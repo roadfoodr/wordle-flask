@@ -13,6 +13,8 @@ app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev')
 
 MAX_GUESSES = 6
+CSS_ABSENT, CSS_PRESENT, CSS_CORRECT = 'absent', 'present', 'correct'
+CSS_UNKNOWN = 'tbd'
 
 
 with open("./data/w_answers.json", 'r') as f:
@@ -69,7 +71,7 @@ def newword(new_word=''):
     if new_word not in w_answers:
         if new_word:
             flash('Not an allowable secret word:', 'user_message')
-            results = ['tbd' for letter in new_word]
+            results = [CSS_UNKNOWN for letter in new_word]
             flash(list(zip(new_word, results)), 'extra_tiles')
         else:
             flash('You must supply a secret word', 'user_message')
@@ -79,10 +81,9 @@ def newword(new_word=''):
         session['correct_word'] = new_word
     return redirect(url_for('index'))
 
-
 @app.route("/wizmode")
 def wizmode():
-    results = ['tbd' for letter in session['correct_word']]
+    results = [CSS_UNKNOWN for letter in session['correct_word']]
     flash('The secret word is:', 'user_message')
     flash(list(zip(session['correct_word'], results)), 'extra_tiles')
     return redirect(url_for('index'))
@@ -132,7 +133,7 @@ def process_guess():
             flash('Word previously guessed:', 'user_message')
     
         if session.get('_flashes'):  # there has been an error message
-            results = ['tbd' for letter in guess]
+            results = [CSS_UNKNOWN for letter in guess]
             flash(list(zip(guess, results)), 'extra_tiles')
         else:
             results = evaluate_guess(session['correct_word'], guess)
@@ -144,7 +145,7 @@ def process_guess():
             elif session['guesses_remaining'] < 1:
                 session['gamestate'] = 'failure'
                 flash('The correct word was:', 'user_message')
-                results = ['tbd' for letter in guess]
+                results = [CSS_UNKNOWN for letter in guess]
                 flash(list(zip(session['correct_word'], results)), 'extra_tiles')
     else:
         flash('Only game commands may be submitted now (try HELP)', 'user_message')
@@ -166,23 +167,27 @@ def clear_session():
 
 @app.errorhandler(404)
 def invalid_route(e):
-    return make_response("<p>Something is wrong</p>", 404)
+    return make_response("<h3>No matching route</h3>", 404)
 
 
 def evaluate_guess(correct_word: str, guess: str, update_map: bool=True) -> list:
+    '''
+    Given a correct word and a guess to evaluate against it, return a list of
+    strings describing the presence or absence of letters from guess in the
+    correct word.  Strings correspond to css classes used by the front end to
+    visually display results.  Optionally record these results in the user session.
+    '''
     if len(correct_word) != len(guess):
-        return None
+        raise ValueError("correct_word and guess must have matching lengths")
     results = []
     for i, c in enumerate(guess):
-        result = 'absent'
+        result = CSS_ABSENT
         if c in correct_word:
-            result = 'present'
+            result = CSS_PRESENT
         if c == correct_word[i]:
-            result = 'correct'
+            result = CSS_CORRECT
         results.append(result)
         if update_map:
             # issue: result in map could be "downgraded" from correct to present
             session['letter_result_map'][c] = result
     return results
-
-
