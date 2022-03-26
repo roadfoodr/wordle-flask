@@ -24,7 +24,7 @@
         {% for turn in session['turns'] %}
             <div class="pure-u-1">
                 {% for letter, result in turn %}
-                <div class="tile pure-u-1-12" data-state="{{result}}" d>{{letter}}</div>
+                <span class="tile pure-u-1-12" data-state="{{result}}" d>{{letter}}</span>
                 {% endfor %}
             </div>
         {% endfor %}
@@ -40,10 +40,10 @@
             {% for flashed_tile in flashed_tiles %}
                 <div class="integral-word">
                 {% for letter, result in flashed_tile %}
-                    <div class="tile  
+                    <span class="tile  
                     {% if result == 'hint' %} pure-u-1-12 pure-u-sm-1-24 pure-u-md-1-24
                     {% else %} pure-u-1-12 {% endif %}"
-                        data-state="{{result}}">{{letter}}</div>
+                        data-state="{{result}}">{{letter}}</span>
                 {% endfor %}
                 </div>
             {% endfor %}
@@ -80,8 +80,9 @@
         </div>
 
   		{% include 'includes/help_modal.html' %}
-       
+
     </div>
+    {% include 'includes/footer.html' %}
 
     </body>
 </html>

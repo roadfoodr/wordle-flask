@@ -254,4 +254,3 @@ def identify_hints(max_results=10):
     sampled_hints = random.sample(hints, min(num_hints, max_results))
         
     return (num_hints, sampled_hints)
-    
