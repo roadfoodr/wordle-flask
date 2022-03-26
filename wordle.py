@@ -8,9 +8,18 @@ import json
 import string
 import os
 import re
+import sys
 
 app = Flask(__name__)
+app.app_context().push()
 app.secret_key = os.environ.get('SECRET_KEY', 'dev')
+GA_TRACKING_ID = os.environ.get('GA_TRACKING_ID', 'dev')
+# print(GA_TRACKING_ID, file=sys.stdout)
+# sys.stdout.flush()
+@app.context_processor
+def inject_global_vars():
+    return {'GA_TRACKING_ID': GA_TRACKING_ID}
+
 
 MAX_GUESSES = 6
 CSS_ABSENT, CSS_PRESENT, CSS_CORRECT = 'absent', 'present', 'correct'
