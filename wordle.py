@@ -8,14 +8,13 @@ import json
 import string
 import os
 import re
-# import sys
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev')
 
 MAX_GUESSES = 6
 CSS_ABSENT, CSS_PRESENT, CSS_CORRECT = 'absent', 'present', 'correct'
-CSS_UNKNOWN = 'tbd'
+CSS_UNKNOWN, CSS_HINT = 'tbd', 'hint'
 
 
 with open("./data/w_answers.json", 'r') as f:
@@ -88,12 +87,22 @@ def newword(new_word=''):
 @app.route("/hint")
 def hint():
     numhints, selected_hints = identify_hints()
+    num_selected = len(selected_hints)
+    possibility_verb = 'is' if num_selected == 1 else 'are'
+    possibility_noun = 'possibility' if num_selected == 1 else 'possibilities'
+    include_string = ', including' if numhints > num_selected else ''
+    flash(f'There {possibility_verb} {numhints} {possibility_noun}{include_string}:', 
+          'user_message')
+    
+    for hint in selected_hints:
+        results = [CSS_HINT for letter in hint]
+        flash(list(zip(hint, results)), 'extra_tiles')
     return redirect(url_for('index'))
 
 @app.route("/wizmode")
 def wizmode():
-    results = [CSS_UNKNOWN for letter in session['correct_word']]
     flash('The secret word is:', 'user_message')
+    results = [CSS_UNKNOWN for letter in session['correct_word']]
     flash(list(zip(session['correct_word'], results)), 'extra_tiles')
     return redirect(url_for('index'))
     
@@ -120,7 +129,7 @@ def process_guess():
         return redirect(url_for('index', _anchor="help"))
     
     if session['gamestate'] == 'in-progress':
-        
+
         if guess == 'hint':
             return hint()
 
@@ -141,7 +150,7 @@ def process_guess():
         if guess in past_guesses:
             flash('Word previously guessed:', 'user_message')
     
-        if session.get('_flashes'):  # there has been an error message
+        if session.get('_flashes'):  # there has been a user message
             results = [CSS_UNKNOWN for letter in guess]
             flash(list(zip(guess, results)), 'extra_tiles')
         else:
@@ -224,8 +233,6 @@ def identify_hints(max_results=10):
          else '.'
          for position_list in session['letter_position_exclude_list']]
         )
-    # print(exclude_r_string, file=sys.stdout)
-    # sys.stdout.flush()
     exclude_r = re.compile(exclude_r_string)
     hints = list(filter(exclude_r.match, hints))
 
@@ -245,9 +252,6 @@ def identify_hints(max_results=10):
     
     num_hints = len(hints)
     sampled_hints = random.sample(hints, min(num_hints, max_results))
-    
-    session['num_hints'] = num_hints
-    session['sampled_hints'] = sampled_hints
-    
+        
     return (num_hints, sampled_hints)
     

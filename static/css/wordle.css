@@ -80,6 +80,14 @@
   .tile[data-state='absent'] {
     background-color: var(--color-absent);
   }
+  .tile[data-state='hint'] {
+    background-color: var(--color-tone-7);
+    border: 2px solid var(--color-tone-3);
+    color: var(--color-tone-1);
+    font-size: 1rem;
+    line-height: 1rem;
+  }
+
   
  .sm-button {
     font-family: inherit;
@@ -133,9 +141,9 @@
     text-align: center;
 }
 
-h1 {margin-bottom: 1.25em;}
+h1 {margin-bottom: 1em;}
 
-.error {
+.user-message {
     color: var(--red);
 }
   
@@ -164,4 +172,12 @@ h1 {margin-bottom: 1.25em;}
 
 .modal-content {
     text-align: left;
-    }
+}
+
+.integral-word {
+    display: inline;
+    white-space: nowrap;
+    margin: .25em .25em .25em .25em;
+}
+
+

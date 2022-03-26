@@ -30,17 +30,22 @@
         {% endfor %}
         
         {# Additional user messages, potentially including some in "turn" format #}
-        <div class="pure-u-1">
+        <div class="pure-u-7-8 pure-u-lg-5-8 pure-u-xl-7-12">
         {% with flashed_messages = get_flashed_messages(category_filter=['user_message']) %}
             {% for flashed_message in flashed_messages %}
-                <h3 class="error">{{flashed_message}}</h3>
+                <h3 class="user-message">{{flashed_message}}</h3>
             {% endfor %}
         {% endwith %}
         {% with flashed_tiles = get_flashed_messages(category_filter=['extra_tiles']) %}
             {% for flashed_tile in flashed_tiles %}
+                <div class="integral-word">
                 {% for letter, result in flashed_tile %}
-                    <div class="tile pure-u-1-12" data-state="{{result}}">{{letter}}</div>
+                    <div class="tile  
+                    {% if result == 'hint' %} pure-u-1-12 pure-u-sm-1-24 pure-u-md-1-24
+                    {% else %} pure-u-1-12 {% endif %}"
+                        data-state="{{result}}">{{letter}}</div>
                 {% endfor %}
+                </div>
             {% endfor %}
         {% endwith %}
         </div>
@@ -67,8 +72,6 @@
             </fieldset>
         </form>
        
-       <p>{{session['num_hints']}}
-       <p>{{session['sampled_hints']}}
         <h4>Letters used:</h4>
         <div class="pure-u-7-8 pure-u-sm-2-3 pure-u-md-3-8 pure-u-lg-7-24 pure-u-xl-1-4 sm-button-row">
             {% for letter, result in session['letter_result_map'].items() %}
