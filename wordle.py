@@ -33,8 +33,9 @@ with open("./data/w_allowed.json", 'r') as f:
 game_commands = {'restart': "Restart the game with today's secret word", 
                  'newgame': 'Restart the game with a random new secret word',
                  'newword': 'Follow by <word> to restart with a specified secret word', 
-                 'random': 'Submit a random (allowable) guess', 
+                 'random': 'Submit a random guess from all allowable guesses', 
                  'hint': 'Display some words that match information known so far',
+                 'auto': 'Submit a random guess consistent with information known so far',
                  'wizmode': 'Temporarily reveal the current secret word',
                  'help': 'Display this list of game commands'
                  }
@@ -144,6 +145,10 @@ def process_guess():
 
         if guess == 'random':
             guess = random.choice(w_allowed)    
+
+        if guess == 'auto':
+            numhints, selected_hints = identify_hints()
+            guess = random.choice(selected_hints)    
 
         if guess and guess not in entries_allowed:
             flash('Not an allowable guess:', 'user_message')
