@@ -59,7 +59,8 @@ def initialize_session():
         random.seed(rseed)
         session['correct_word'] = random.choice(w_answers)
         # reset global seed so different players don't get the same sequence
-        random.seed(random.seed(datetime.now()))
+        rseed_now = int(datetime.now().strftime('%f'))
+        random.seed(rseed_now)
 
 @app.route("/")
 def index():
@@ -74,7 +75,8 @@ def restart():
 def newgame():
     session.clear()
     initialize_session()
-    random.seed(random.seed(datetime.now()))
+    rseed_now = int(datetime.now().strftime('%f'))
+    random.seed(rseed_now)
     session['correct_word'] = random.choice(w_answers)
     return redirect(url_for('index'))
 
